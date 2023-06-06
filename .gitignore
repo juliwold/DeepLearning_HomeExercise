@@ -2,3 +2,4 @@
 !.gitignore
 data
 *.pt
+/models/*/*/pred
