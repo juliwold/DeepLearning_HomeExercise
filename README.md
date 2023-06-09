@@ -2,6 +2,8 @@
 
 Home exercise for NOVA course on deep learning in remote sensing.
 
+[Models](<https://www.comet.com/juliwold/home-exercise-sapling-detector/view/uxR2erf0uJlERPXPjybwdN2yE/panels>)
+
 ## Objective
 
 Compare the effect of training a seedling detector on your own annotated
@@ -34,7 +36,8 @@ dataset Vs full dataset (all annotations merged) on the detector’s performance
 
 ### Stats
 
-Provide stats on the number of annotated images and bounding boxes (some graph would even be better). e.g 
+Provide stats on the number of annotated images and bounding boxes (some graph
+would even be better). e.g
 
 |          | Own data | Full data |
 |----------|----------|-----------|
