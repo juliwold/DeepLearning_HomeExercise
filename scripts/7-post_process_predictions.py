@@ -18,7 +18,7 @@ def main():
 
     # Define models to process predictions of.
     model_dir = os.path.join("..", "models")
-    models = ["my_annotations_yolov8m.pt_640", "all_annotations__yolov8m.pt_640"]
+    models = ["my_annotations_yolov8m.pt_640", "all_annotations_yolov8m.pt_640"]
 
     # Process predictions
     for model in models:
