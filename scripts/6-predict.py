@@ -3,22 +3,7 @@ import glob
 
 from ultralytics import YOLO
 
-
-def path_to_project(model_dir, model_name):
-    if "my_annotations" in model_name:
-        sub_dir = "my_annotations"
-    else:
-        sub_dir = "all_annotations"
-    project = os.path.join(model_dir, sub_dir, model_name)
-
-    return(project)
-
-
-def path_to_model(model_dir, model_name):
-    model_path = os.path.join(path_to_project(model_dir, model_name), "weights", "best.pt")
-
-    return model_path
-
+from find_paths import path_to_project, path_to_model
 
 def main():
     #
@@ -54,6 +39,7 @@ def main():
                 save_conf=True,
                 line_width=1,
             )
+
 
 if __name__ == "__main__":
     main()
