@@ -2,8 +2,10 @@ import os
 
 from osgeo import gdal, osr
 from shapely.geometry import Polygon
+import numpy as np
 import pandas as pd
 import geopandas as gpd
+import shapely
 
 from yolo_conversions import yolo_to_xy
 
@@ -74,3 +76,47 @@ def collect_bounding_boxes(image_path, label_path, buffer_size, tile_index):
     bboxes_tile = gpd.GeoDataFrame(pd.concat(bboxes, ignore_index=True))
 
     return bboxes_tile
+
+
+def clean_overlapping(bounding_boxes, th=0.7):
+    geometries = bounding_boxes["geometry"]
+
+    # Find intersecting geometries.
+    intersecting_boxes = np.array(
+        [i.intersects(geometries) for i in geometries]
+    )  # Check intersects for each box.
+    intersecting_pairs = np.transpose(
+        np.where(intersecting_boxes)
+    )  # Index of intersecting pairs.
+    # Remove self-intersects and duplicates.
+    intersecting_pairs = intersecting_pairs[
+        intersecting_pairs[:, 0] != intersecting_pairs[:, 1], :
+    ]  # Remove self-intersects.
+    intersecting_pairs = np.sort(intersecting_pairs, axis=1)  # Ignore order.
+    intersecting_pairs = np.unique(
+        intersecting_pairs, axis=0
+    )  # Keep only unique pairs.
+
+    # Solve conflicts.
+    print(f"Found {np.shape(intersecting_pairs)[0]} potential overlapping boxes.")
+    remove_boxes = []
+    for x, y in intersecting_pairs:
+        x_geom = geometries[x]
+        y_geom = geometries[y]
+        iou = (
+            shapely.intersection(x_geom, y_geom).area
+            / shapely.unary_union([x_geom, y_geom]).area
+        )
+        if iou >= th:
+            x_prob = bounding_boxes.loc[x, "prob"]
+            y_prob = bounding_boxes.loc[y, "prob"]
+            if x_prob > y_prob:
+                remove_boxes.append(y)
+            else:
+                remove_boxes.append(x)
+
+    # Remove overlapping
+    print(f"{len(remove_boxes)} overlapping boxes removed.")
+    cleaned_boxes = bounding_boxes.drop(index=remove_boxes)
+
+    return cleaned_boxes
