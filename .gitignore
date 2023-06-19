@@ -2,4 +2,4 @@
 !.gitignore
 data
 *.pt
-/models/*/*/pred
+/models/*/*/predict
