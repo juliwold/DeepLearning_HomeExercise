@@ -1,12 +1,12 @@
 import os
 import glob
 
-from osgeo import gdal, osr
+from osgeo import gdal
 import pandas as pd
 import geopandas as gpd
 
 from find_paths import path_to_project
-from process_predictions import collect_bounding_boxes
+import process_predictions
 
 
 def main():
@@ -18,12 +18,13 @@ def main():
 
     # Define models to process predictions of.
     model_dir = os.path.join("..", "models")
-    models = ["my_annotations_yolov8m.pt_640", "all_annotations_yolov8m.pt_640"]
+    models = ["my_annotations_yolov8n.pt_256", "my_annotations_yolov8m.pt_640", "all_annotations_yolov8m.pt_640"]
 
     # Process predictions
     for model in models:
         print(f"Processing predictions for {model}.")
         project = path_to_project(model_dir, model)
+        all_predictions = []
         for tile in tiles:
             ortho = os.path.basename(tile).strip("1234567890_")  # Remove tile prefix.
             print(f"Processing predictions of {ortho}.")
@@ -53,17 +54,23 @@ def main():
                 ]
                 if not label:
                     continue
-                detections_tile = collect_bounding_boxes(
+                detections_tile = process_predictions.collect_bounding_boxes(
                     i, label[0], buffer_size, tile_index
                 )
                 all_detections.append(detections_tile)
             bounding_boxes = gpd.GeoDataFrame(
                 pd.concat(all_detections, ignore_index=True)
             )
-            # TODO: Clean up boxes with IoU threshold.
-            bounding_boxes.to_file(
+            # Clean up boxes with IoU threshold.
+            cleaned_predictions = process_predictions.clean_overlapping(bounding_boxes, th = 0.7)
+            all_predictions.append(cleaned_predictions)
+            cleaned_predictions.to_file(
                 os.path.join(out_dir, "predictions.shp"), driver="ESRI Shapefile"
             )
+        predicted = gpd.GeoDataFrame(pd.concat(all_predictions, ignore_index=True))
+        predicted.to_file(
+            os.path.join(project, "processed_predictions", "predictions.shp")
+        )
 
 
 if __name__ == "__main__":
