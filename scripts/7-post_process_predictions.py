@@ -67,10 +67,10 @@ def main():
             cleaned_predictions.to_file(
                 os.path.join(out_dir, "predictions.shp"), driver="ESRI Shapefile"
             )
-        predicted = gpd.GeoDataFrame(pd.concat(all_predictions, ignore_index=True))
-        predicted.to_file(
-            os.path.join(project, "processed_predictions", "predictions.shp")
-        )
+            predicted = gpd.GeoDataFrame(pd.concat(all_predictions, ignore_index=True))
+            predicted.to_file(
+                os.path.join(project, "predictions_processed", "predictions.shp")
+            )
 
 
 if __name__ == "__main__":
