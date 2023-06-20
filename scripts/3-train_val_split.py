@@ -32,7 +32,7 @@ def main():
         ]
         print(f"{len(txt_intersect)} labels with image tiles.")
 
-        train_size = round(0.7 * len(txt_intersect))
+        train_size = round(split_train * len(txt_intersect))
         print(f"{train_size} tiles drawn for training.")
 
         # Draw random sample.
