@@ -2,10 +2,15 @@ import geopandas as gpd
 
 
 def clamp_yolo(coord):
-    """Clamp cord between 0 and 1.
+    """Clamp yolo coordinate
+
+    Clamps coordinate outside of 0-1 to 0 or 1.
 
     Args:
-        coord (float): Value to clamp between 0 and 1.
+        coord (float): Coordinate to clamp.
+
+    Returns:
+        float: Clamped coordinate.
     """
     if coord < 0:
         return 0
@@ -15,12 +20,15 @@ def clamp_yolo(coord):
 
 
 def utm_to_yolo(gdf, tile_bbox, class_ids):
-    """Convert UTM coordinates to YOLO format.
+    """Covert UTM coordinates to YOLO format
 
     Args:
-        gdf (gdf): GeoDataFrame containing annotated bounding boxes
-        tile_bbox (list): Bounds of tile as list [min_x, min_y, max_x, max_y].
-        class_ids (dict):
+        gdf (GeoDataFrame): Annotated bounding boxes in tile.
+        tile_bbox (list): Bounding box of tile as a list [min_x, min_y, max_x, max_y].
+        class_ids (dict): Class ids.
+
+    Returns:
+        str: Annotations in YOLO format.
     """
     annotations = []
     # print(gdf["geometry"])
@@ -64,10 +72,10 @@ def utm_to_yolo(gdf, tile_bbox, class_ids):
 
 
 def yolo_to_xy(labels, img_width, img_height):
-    """Convert YOLO bounding box cords to xy
+    """Convert YOLO coordinates to xy
 
     Args:
-        labels (list): List of YOLO boxes to convert.
+        labels (list): YOLO boxes to convert.
         img_width (int): Image width in pixels.
         img_height (int): Image height in pixels.
 

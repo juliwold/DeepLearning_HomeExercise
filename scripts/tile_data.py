@@ -12,17 +12,17 @@ def tile_orthomosaic(
     buffer_size,
     path_osgeo_utils,
 ):
-    """Tile orthomosiacs
+    """Tile orthomosaics.
 
     Args:
-        input_ortho_path (str): Path to orthomosaic to tile.
+        input_ortho_path (str): Path of orthomosaic to tile.
         output_path (str): Path to directory for writing tiles.
-        footprints_path (str): Path to file containing acquisition footprints.
-        tile_size (int): Size of tile in meters.
-        buffer_size (int): Size of buffer in meters.
-        path_osgeo_utils (str): Path to utilities.
+        footprints_path (str): Path to file containing footprint of orthomosaic.
+        tile_size (int): Size of tiles in meters.
+        buffer_size (int): Size of tile buffer in meters.
+        path_osgeo_utils (str): Path to gdal utilities.
     """
-    # read drone acquisition footprints
+    # Read drone acquisition footprints
     footprints = gpd.read_file(footprints_path)
     # Get ortho name
     ortho_name = os.path.splitext(os.path.basename(input_ortho_path))[0]

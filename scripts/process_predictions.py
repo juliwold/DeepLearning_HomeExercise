@@ -79,6 +79,20 @@ def collect_bounding_boxes(image_path, label_path, buffer_size, tile_index):
 
 
 def clean_overlapping(bounding_boxes, th=0.7):
+    """Clean overlapping bounding boxes.
+
+    Will remove overlapping bounding boxes if the Intersect over Union (IOU)
+    between the intersecting boxes is higher than the set threshold (default 0.7).
+    The box with lowest probability will be discarded.
+
+    Args:
+        bounding_boxes (gdf): GeoDataFrame with bounding boxes.
+        th (float, optional): Threshold for IoU. Defaults to 0.7.
+
+    Returns:
+        gdf: GeoDataFrame with bounding boxes cleaned for boxes overlapping over
+        set threshold.
+    """
     geometries = bounding_boxes["geometry"]
 
     # Find intersecting geometries.
