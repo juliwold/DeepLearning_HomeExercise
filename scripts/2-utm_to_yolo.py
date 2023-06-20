@@ -78,5 +78,6 @@ def main():
             dest_img = f"{output_dir}\\{filename}"
             shutil.copy(src_img, dest_img)
 
+
 if __name__ == "__main__":
     main()

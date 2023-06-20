@@ -1,21 +1,17 @@
-if __name__ == "__main__":
-    import os
-    import yaml
+import os
+import yaml
 
-    import pandas as pd
-    from itertools import product
-    import comet_ml
+import pandas as pd
+from itertools import product
+import comet_ml
 
-    experiment = comet_ml.init()
+experiment = comet_ml.init()
 
-    # experiment = comet_ml.Experiment(
-    # api_key="API-key",
-    # project_name=""
-    # )
+import ultralytics
+import torch
 
-    import ultralytics
-    import torch
 
+def main():
     torch.cuda.empty_cache()
     torch.cuda.memory_allocated()
     torch.cuda.memory_reserved()
@@ -75,7 +71,7 @@ if __name__ == "__main__":
     # project = ".test_runs"
     # )
 
-    start = 6
+    start = 0  # For restarting.
     for i, settings in model_settings.iloc[start:, :].iterrows():
         model = ultralytics.YOLO(settings["model"])
         model.train(
@@ -87,3 +83,7 @@ if __name__ == "__main__":
         )
         del model
         torch.cuda.empty_cache()
+
+
+if __name__ == "__main__":
+    main()
