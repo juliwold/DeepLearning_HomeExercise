@@ -18,7 +18,11 @@ def main():
 
     # Define models to process predictions of.
     model_dir = os.path.join("..", "models")
-    models = ["my_annotations_yolov8n.pt_256", "my_annotations_yolov8m.pt_640", "all_annotations_yolov8m.pt_640"]
+    models = [
+        "my_annotations_yolov8n.pt_256",
+        "my_annotations_yolov8n.pt_640",
+        "all_annotations_yolov8m.pt_640",
+    ]
 
     # Process predictions
     for model in models:
@@ -62,7 +66,9 @@ def main():
                 pd.concat(all_detections, ignore_index=True)
             )
             # Clean up boxes with IoU threshold.
-            cleaned_predictions = process_predictions.clean_overlapping(bounding_boxes, th = 0.7)
+            cleaned_predictions = process_predictions.clean_overlapping(
+                bounding_boxes, th=0.7
+            )
             all_predictions.append(cleaned_predictions)
             cleaned_predictions.to_file(
                 os.path.join(out_dir, "predictions.shp"), driver="ESRI Shapefile"

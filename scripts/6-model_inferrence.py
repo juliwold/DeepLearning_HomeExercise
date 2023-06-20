@@ -5,6 +5,7 @@ from ultralytics import YOLO
 
 from find_paths import path_to_project, path_to_model
 
+
 def main():
     #
     path_to_tiles = os.path.join("..", "data", "tiles", "test_data")
@@ -12,9 +13,18 @@ def main():
     # Define models to predict with.
     model_dir = os.path.join("..", "models")
     models = [
-        {"name": "my_annotations_yolov8n.pt_256", "conf": 0.44},  # Best performing model for my annotations but image size is worrying, 2nd best model added as backup.
-        {"name": "my_annotations_yolov8m.pt_640", "conf": 0.60},  # 2nd best model for my annotations.
-        {"name": "all_annotations_yolov8m.pt_640", "conf": 0.23},  # Best performing model for all annotations.
+        {
+            "name": "my_annotations_yolov8n.pt_256",
+            "conf": 0.44,
+        },  # Best performing model for my annotations but image size is worrying, 2nd best model added as backup.
+        {
+            "name": "my_annotations_yolov8n.pt_640",
+            "conf": 0.60,
+        },  # 2nd best model for my annotations.
+        {
+            "name": "all_annotations_yolov8m.pt_640",
+            "conf": 0.23,
+        },  # Best performing model for all annotations.
     ]
 
     for model in models:
