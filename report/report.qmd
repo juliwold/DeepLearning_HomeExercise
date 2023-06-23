@@ -1,0 +1,293 @@
+---
+title: "Home excericse - NOVA course on deep learning in remote sensing"
+author: "Julius Wold"
+format: gfm
+tbl-cap-location: top
+---
+
+```{python}
+#| include: FALSE
+
+import os
+from glob import glob
+import itertools
+import json
+
+import pandas as pd
+```
+
+```{r}
+#| include: FALSE
+
+library(here)
+library(tidyverse)
+library(reticulate)
+```
+
+# Introduction
+
+## Objective
+
+Compare the effect of training a seedling detector on your own annotated dataset vs. the full dataset on the detector’s performance.
+
+# Materials and methods
+
+## Annotations
+
+Two sets of annotations were used for model tranining: "My annotations" and "All annotations".
+
+- "My annotations"
+  - Annotations made by the author.
+- "All annotations"
+  - Annotations from all students merged.
+
+```{python}
+#| include: FALSE
+
+def number_of_images(anno_data_path):
+    n_train = len(glob(os.path.join(anno_data_path, "train", "images", "*.tif")))
+    n_val = len(glob(os.path.join(anno_data_path, "val", "images", "*.tif")))
+    n_images = {"train": n_train, "val": n_val, "all": n_train + n_val}
+
+    return n_images
+
+
+def number_of_boxes(anno_data_path):
+    labels_train = glob(os.path.join(anno_data_path, "train", "labels", "*.txt"))
+    n_train = sum(map(count_boxes, labels_train))
+    labels_val = glob(os.path.join(anno_data_path, "val", "labels", "*.txt"))
+    n_val = sum(map(count_boxes, labels_val))
+    n_boxes = {"train": n_train, "val": n_val, "all": n_train + n_val}
+
+    return n_boxes
+
+
+def count_boxes(label):
+    with open(label, "r") as f:
+        n_boxes = len(f.readlines())
+
+    return n_boxes
+
+
+def anno_summary(anno_data_path):
+    annotations_set = os.path.basename(anno_data_path).replace("_", " ").capitalize()
+    n_images = number_of_images(anno_data_path)
+    n_boxes = number_of_boxes(anno_data_path)
+    df_index = pd.MultiIndex.from_product([["Number of images", "Number of trees"], ["Train", "Val", "Sum"]], names=["Count", "Split"])
+    summary = pd.DataFrame({annotations_set: list(n_images.values()) + list(n_boxes.values())}, index=df_index)
+
+    return summary
+```
+
+```{python}
+#| include: FALSE
+
+annotations = glob(os.path.join("..", "data", "annotated_data", "train", "*"))
+summaries = pd.concat(map(anno_summary, annotations), axis=1)
+
+```
+
+```{r}
+#| echo: FALSE
+#| label: tbl-training
+#| tbl-cap: Training data
+
+knitr::kable(py$summaries)
+```
+
+## Model training
+
+YOLOv8 models were trained using the dataset "My annotations" and the dataset "All annotations". A grid search were performed for model sizes "Nano", "Medium" and "Xtra large" and image sizes 256, 640 and 1024. The best mode for each dataset were selected using mAP@.5.
+
+```{python}
+#| include: FALSE
+
+grid_search = pd.DataFrame(list(itertools.product(["yolov8n.pt", "yolov8m.pt", "yolov8x.pt"], [256, 640, 1024])), columns=["Model", "Image size"])
+```
+
+```{r}
+#| echo: FALSE
+#| label: tbl-search
+#| tbl-cap: Grid search.
+
+knitr::kable(py$grid_search)
+```
+
+## Model evaluation
+
+The selected models from the model training were evaluated using machine-learning metris and domain metrics.
+
+### ML metrics
+
+Machine learning metrics were evaluated by testing the models against tiled test data.
+
+## Domain metrics
+
+$$
+RMSE = \sqrt{\frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})^2}{n}}
+$$
+
+$$
+MD = \frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})}{n}
+$$
+
+# Results & Discussion
+
+## Model training
+
+Models trained by the "My annotation" dataset achived better performance in training than the models trained on "All annotations". For "My annotation" the highest performance was acchived by the YOLOv8 nano model with image size 256 (mAP@.5 of 061 at epoch 133).
+
+```{r}
+my_perfomance <-
+    here("models", "model_performance", "juliwold_home_exercise_sapling_detector_sapling_detector_table_data_my_annotations.csv") %>%
+    read_csv(show_col_types = FALSE) %>%
+    select(-data)
+all_perfomance <-
+    here("models", "model_performance", "juliwold_home_exercise_sapling_detector_sapling_detector_table_data_all_annotations.csv") %>%
+    read_csv(show_col_types = FALSE) %>%
+    select(-data)
+```
+
+```{r}
+#| label: tbl-trainingperformance
+#| tbl-cap: "Training performance of best model."
+#| tbl-subcap: 
+#|   - "My annotations"
+#|   - "All annotations"
+#| layout-ncol: 2
+
+knitr::kable(my_perfomance)
+
+knitr::kable(all_perfomance)
+```
+
+> Detailed view of trained models can be found in [this Comet project](<https://www.comet.com/juliwold/home-exercise-sapling-detector/view/uxR2erf0uJlERPXPjybwdN2yE/panels>).
+
+```{r}
+#| include: FALSE
+
+collect_training_results <- function(model_path) {
+    training_results <-
+        here(model_path, "results.csv") %>%
+        read_csv(show_col_types = FALSE) %>%
+        mutate(model = basename(model_path), .before = 1)
+}
+```
+
+```{r}
+#| include: FALSE
+
+training_results <-
+    map(
+        c("my_annotations", "all_annotations"),
+        .f = ~{
+            results_annotations <-
+                here("models", .x) %>%
+                list.files(full.names = TRUE) %>%
+                map(collect_training_results) %>%
+                bind_rows() %>%
+                mutate(
+                    annotation_set = .x, .before = 1,
+                    model = str_remove(model, .x)
+                )
+        }
+    ) %>%
+    bind_rows()
+```
+
+```{r}
+#| echo: FALSE
+#| messages: FALSE
+#| label: fig-training
+#| fig-cap: Training results
+#| width: 1024
+
+training_plot <-
+    training_results %>%
+    mutate(
+        model_size = str_extract(model, "yolov8[nmx]"),
+        image_size = str_extract(model, "\\d{3,4}")
+    ) %>%
+    ggplot(aes(epoch, `metrics/mAP50(B)`, color = model_size, linetype = image_size)) +
+    geom_line(alpha = 0.5) +
+    geom_smooth(se = FALSE) +
+    colorspace::scale_color_discrete_qualitative(palette = "Dark3") +
+    # scale_colour_viridis_d() +
+    facet_wrap(~annotation_set, ncol = 1, scales = "free")
+training_plot
+```
+
+## Model evaluation
+
+```{python}
+#| include: FALSE
+models = [
+    "..\\models\\all_annotations\\all_annotations_yolov8m.pt_640",
+    "..\\models\\my_annotations\\my_annotations_yolov8n.pt_256",
+    "..\\models\\my_annotations\\my_annotations_yolov8n.pt_640",
+]
+```
+
+### ML metrics
+
+```{python}
+#| include: FALSE
+
+def collect_ml_metrics(model_path):
+    with open(os.path.join(model_path, "val", "test_results.json"), "r") as f:
+        ml_metrics = json.load(f)
+    metrics_table = pd.DataFrame(ml_metrics, index=[os.path.basename(model_path)])
+
+    return(metrics_table)
+```
+
+```{python}
+#| include: FALSE
+
+ml_metrics = pd.concat(map(collect_ml_metrics, models)).round(decimals=2)
+```
+
+```{r}
+#| echo: FALSE
+#| label: tbl-mlmetrics
+#| tbl-cap: Machine learnining metrics.
+
+knitr::kable(py$ml_metrics)
+```
+
+### Domain
+
+```{python}
+#| include: FALSE
+
+def collect_domain_metrics(model_path):
+    metrics = pd.read_csv(os.path.join(model_path, "predictions_processed", "metrics.csv"))
+    metrics["Model"] = os.path.basename(model_path)
+    return(metrics)
+```
+
+```{python}
+#| include: FALSE
+
+dm_all = pd.concat(map(collect_domain_metrics, models))
+mi = pd.MultiIndex.from_frame(dm_all[["Model", "aoi_name"]])
+```
+
+
+```{python}
+#| include: FALSE
+
+domain_metrics = dm_all.set_index(mi).round()
+domain_metrics = domain_metrics.drop(["aoi_name", "Model", "rmse_n", "rmse_n (%)","bias_n", "bias_n (%)",], axis = 1)
+domain_metrics = domain_metrics.rename(columns={"rmse_dens": "RMSE", "rmse_dens (%)": "RMSE (%)", "bias_dens": "MD", "bias_dens (%)": "MD (%)"})
+```
+
+```{r}
+#| echo: FALSE
+#| label: tbl-comainmetrics
+#| tbl-cap: Domain metrics.
+
+knitr::kable(py$domain_metrics)
+```
+
+# Conclusion
