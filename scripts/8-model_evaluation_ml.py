@@ -23,7 +23,7 @@ def main():
             print("Model not found.")
             continue
         metrics = yolo_model.val(project=project, split="test")
-        results = metrics.result_dict
+        results = metrics.results_dict
         with open(os.path.join(project, "val", "test_results.json"), "w") as f:
             json.dump(results, f)
 
