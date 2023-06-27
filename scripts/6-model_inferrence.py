@@ -14,13 +14,9 @@ def main():
     model_dir = os.path.join("..", "models")
     models = [
         {
-            "name": "my_annotations_yolov8n.pt_256",
-            "conf": 0.44,
-        },  # Best performing model for my annotations but image size is worrying, 2nd best model added as backup.
-        {
             "name": "my_annotations_yolov8n.pt_640",
-            "conf": 0.60,
-        },  # 2nd best model for my annotations.
+            "conf": 0.34,
+        },  # Best performing model for my annotations.
         {
             "name": "all_annotations_yolov8m.pt_640",
             "conf": 0.23,

@@ -1,0 +1,435 @@
+---
+title: "Home excericse - NOVA course on deep learning in remote sensing"
+author: "Julius Wold"
+format: gfm
+tbl-cap-location: top
+---
+
+```{python}
+#| include: FALSE
+
+import os
+from glob import glob
+import itertools
+import json
+
+import pandas as pd
+```
+
+```{r}
+#| include: FALSE
+
+library(here)
+library(tidyverse)
+library(sf)
+library(reticulate)
+```
+
+# Introduction
+
+## Objective
+
+Compare the effect of training a seedling detector on your own annotated dataset vs. the full dataset on the detector’s performance.
+
+# Materials and methods
+
+## Annotations
+
+Two sets of annotations were used for model tranining: "My annotations" and "All annotations".
+
+- "My annotations"
+  - Annotations made by the author.
+- "All annotations"
+  - Annotations from all students merged.
+
+"My annotations" consists of 48 images with 280 annotations of trees while "All annotations" consists of 387 images with 5062 annotations. 70% of data was randomly assigned to training and 30% to validation. An overview of images and annotations used in the tranining and validation split are shown in @tbl-training.
+
+```{python}
+#| include: FALSE
+
+def number_of_images(anno_data_path):
+    n_train = len(glob(os.path.join(anno_data_path, "train", "images", "*.tif")))
+    n_val = len(glob(os.path.join(anno_data_path, "val", "images", "*.tif")))
+    n_images = {"train": n_train, "val": n_val, "all": n_train + n_val}
+
+    return n_images
+
+
+def number_of_boxes(anno_data_path):
+    labels_train = glob(os.path.join(anno_data_path, "train", "labels", "*.txt"))
+    n_train = sum(map(count_boxes, labels_train))
+    labels_val = glob(os.path.join(anno_data_path, "val", "labels", "*.txt"))
+    n_val = sum(map(count_boxes, labels_val))
+    n_boxes = {"train": n_train, "val": n_val, "all": n_train + n_val}
+
+    return n_boxes
+
+
+def count_boxes(label):
+    with open(label, "r") as f:
+        n_boxes = len(f.readlines())
+
+    return n_boxes
+
+
+def anno_summary(anno_data_path):
+    annotations_set = os.path.basename(anno_data_path).replace("_", " ").capitalize()
+    n_images = number_of_images(anno_data_path)
+    n_boxes = number_of_boxes(anno_data_path)
+    df_index = pd.MultiIndex.from_product([["Number of images", "Number of trees"], ["Train", "Val", "Sum"]], names=["Count", "Split"])
+    summary = pd.DataFrame({annotations_set: list(n_images.values()) + list(n_boxes.values())}, index=df_index)
+
+    return summary
+```
+
+```{python}
+#| include: FALSE
+
+annotations = glob(os.path.join("..", "data", "annotated_data", "train", "*"))
+summary = pd.concat(map(anno_summary, annotations), axis=1)
+summary_index = summary.index.to_frame()
+
+```
+
+```{r}
+#| echo: FALSE
+#| label: tbl-training
+#| tbl-cap: "Number of images and annotatations for each dataset."
+
+summary_table <-
+    bind_cols(py$summary_index, py$summary) %>%
+    knitr::kable()
+summary_table
+```
+
+## Model training
+
+YOLOv8 models were trained using the dataset "My annotations" and the dataset "All annotations". A grid search were performed for model sizes "Nano", "Medium" and "Xtra large" and image sizes 256, 640 and 1024. The best mode for each dataset were selected using mAP@.5.
+
+```{python}
+#| include: FALSE
+
+grid_search = pd.DataFrame(list(itertools.product(["yolov8n.pt", "yolov8m.pt", "yolov8x.pt"], [256, 640, 1024])), columns=["Model", "Image size"])
+```
+
+```{r}
+#| echo: FALSE
+#| label: tbl-search
+#| tbl-cap: Grid search.
+
+knitr::kable(py$grid_search)
+```
+
+## Model evaluation
+
+The selected models from the model training were evaluated using machine-learning metris and domain metrics on the test data.
+
+### ML metrics
+
+Machine learning metrics were evaluated by testing the models against tiled test data. Residual Mean Square Error (RMSE) and Mean Deviation (MD) were calculated according to formula @eq-rmse and @eq-md for observed and predicted trees per ha. Additionally RMSE (%) and MD (%) were calculated by dividing RMSE and MD by the observed mean.
+
+## Domain metrics
+
+$$
+RMSE = \sqrt{\frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})^2}{n}}
+$$ {#eq-rmse}
+
+$$
+MD = \frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})}{n}
+$$ {#eq-md}
+
+# Results & Discussion
+
+## Model training
+
+> Detailed view of trained models can be found in [this Comet project](<https://www.comet.com/juliwold/home-exercise-sapling-detector/view/uxR2erf0uJlERPXPjybwdN2yE/panels>).
+
+### Training performance
+
+Models trained by the "My annotation" dataset achived better performance in training than the models trained on "All annotations". For "My annotation" the highest performance was acchived by the nano model with image size 640 (mAP@.5 of 0.59 at epoch 94). The best perfoming model for "All annotations" was the meduim model with an image size of 640 (mAP@.5 of 0.36 at epoch 42). Summary of training results are shown in @tbl-trainingperformance-1 and @tbl-trainingperformance-2.
+
+```{r}
+#| include: FALSE
+
+my_perfomance <-
+    here("models", "model_performance", "juliwold_home_exercise_sapling_detector_sapling_detector_table_data_my_annotations.csv") %>%
+    read_csv(show_col_types = FALSE) %>%
+    select(-data)
+all_perfomance <-
+    here("models", "model_performance", "juliwold_home_exercise_sapling_detector_sapling_detector_table_data_all_annotations.csv") %>%
+    read_csv(show_col_types = FALSE) %>%
+    select(-data)
+```
+
+```{r}
+#| echo: FALSE
+#| label: tbl-trainingperformance
+#| tbl-cap: "Training performance of best models."
+#| tbl-subcap: 
+#|   - "My annotations"
+#|   - "All annotations"
+#| layout-ncol: 1
+training_perfomance <- function(x) {
+    x %>%
+        select(-Name) %>%
+        knitr::kable(digits = 3)
+}
+
+training_perfomance(my_perfomance)
+training_perfomance(all_perfomance)
+```
+
+There was little impact on training perfomance with varying image size and model size for models trained with "All annotations". For models trained with "My annotations" a difference can be observed between nano models and medium and xtra large models. Medium and xtra large seems to improve faster than nano models (higher performance at earlier epoch) but are more prone to overfitting on the data. mAP@.5 curves for models are shown in @fig-training.
+
+```{r}
+#| include: FALSE
+
+collect_training_results <- function(model_path) {
+    training_results <-
+        here(model_path, "results.csv") %>%
+        read_csv(show_col_types = FALSE) %>%
+        mutate(model = basename(model_path), .before = 1)
+}
+```
+
+```{r}
+#| include: FALSE
+
+training_results <-
+    map(
+        c("my_annotations", "all_annotations"),
+        .f = ~{
+            results_annotations <-
+                here("models", .x) %>%
+                list.files(full.names = TRUE) %>%
+                map(collect_training_results) %>%
+                bind_rows() %>%
+                mutate(
+                    annotation_set = .x, .before = 1,
+                    model = str_remove(model, .x)
+                )
+        }
+    ) %>%
+    bind_rows()
+```
+
+```{r}
+#| echo: FALSE
+#| message: FALSE
+#| warning: FALSE
+#| label: fig-training
+#| fig-cap: Training results
+#| width: 1024
+
+training_plot <-
+    training_results %>%
+    mutate(
+        model_size = str_extract(model, "yolov8[nmx]"),
+        image_size = str_extract(model, "\\d{3,4}")
+    ) %>%
+    ggplot(aes(epoch, `metrics/mAP50(B)`, color = model_size, linetype = image_size)) +
+    geom_line(alpha = 0.5) +
+    geom_smooth(se = FALSE) +
+    colorspace::scale_color_discrete_qualitative(palette = "Dark3") +
+    # scale_colour_viridis_d() +
+    facet_wrap(~annotation_set, ncol = 1, scales = "free")
+training_plot
+```
+
+### Model speed
+
+Increasing model size (Nano -> Medium -> Xtra large) resulted in slower models. The effect of image size on model speed was greater with increasing model size. Image size had little effect on nano models but lead to much slower models for medium and xtra large models. @fig-modelspeed shows the effect of model size and image size on model speed.
+
+::: {#fig-modelspeed layout-ncol=2}
+
+![My annotations](<https://github.com/juliwold/DeepLearning_HomeExercise/blob/main/figures/model_speed_my_annotations.jpeg>){#fig-modelspeed-my}
+![All annotations](<https://github.com/juliwold/DeepLearning_HomeExercise/blob/main/figures/model_speed_all_annotations.jpeg>){#fig-modelspeed-all}
+
+
+Model speed (size of dots represents image size).
+:::
+
+## Model evaluation
+
+```{python}
+#| include: FALSE
+models = [
+    "..\\models\\my_annotations\\my_annotations_yolov8n.pt_640",
+    "..\\models\\all_annotations\\all_annotations_yolov8m.pt_640",
+]
+```
+
+### ML metrics
+
+The best model trained on "All annotations" outperformed the best model trained on "My annotations". ML metrics of the models are shown in @tbl-mlmetrics.
+
+```{python}
+#| include: FALSE
+
+def collect_ml_metrics(model_path):
+    with open(os.path.join(model_path, "val", "test_results.json"), "r") as f:
+        ml_metrics = json.load(f)
+    metrics_table = pd.DataFrame(ml_metrics, index=[os.path.basename(model_path)])
+
+    return(metrics_table)
+```
+
+```{python}
+#| include: FALSE
+
+ml_metrics = pd.concat(map(collect_ml_metrics, models)).round(decimals=2)
+```
+
+```{r}
+#| echo: FALSE
+#| label: tbl-mlmetrics
+#| tbl-cap: Machine learnining metrics.
+
+knitr::kable(py$ml_metrics)
+```
+
+### Domain
+
+RMSE and MD of predicted trees per. ha are shown in @tbl-domainmetrics. The model trained by "My annotation" perfomed worse than the one trained by "All annotations". The "All annotations" model perfomed better at all four sites. RMSE and RMSE (%) of all sites combined were respectivley 1262 trees/ha and 81% for "My annotations" and 632 trees/ha and 34% for "All annotations."
+
+Both models consistently underestimated the number of trees of all sites, altough "All annotations" underestimated by less. MD and MD (%) of "My annotations" of all sites combined were respectivley 1188 trees/ha and 81% for "My annotations" and 499 trees/ha and 34% for "All annotations".
+
+```{python}
+#| include: FALSE
+
+def collect_domain_metrics(model_path):
+    metrics = pd.read_csv(os.path.join(model_path, "predictions_processed", "metrics.csv"))
+    metrics["Model"] = os.path.basename(model_path)
+    return(metrics)
+```
+
+```{python}
+#| include: FALSE
+
+dm_all = pd.concat(map(collect_domain_metrics, models))
+mi = pd.MultiIndex.from_frame(dm_all[["Model", "aoi_name"]])
+```
+
+
+```{python}
+#| include: FALSE
+
+domain_metrics = dm_all.set_index(mi).round()
+domain_metrics = domain_metrics.drop(["aoi_name", "Model", "rmse_n", "rmse_n (%)","bias_n", "bias_n (%)",], axis = 1)
+domain_metrics = domain_metrics.rename(columns={"rmse_dens": "RMSE", "rmse_dens (%)": "RMSE (%)", "bias_dens": "MD", "bias_dens (%)": "MD (%)"})
+domain_index = domain_metrics.index.to_frame()
+```
+
+```{r}
+#| echo: FALSE
+#| label: tbl-domainmetrics
+#| tbl-cap: Domain metrics.
+domain_table <-
+    bind_cols(py$domain_index, py$domain_metrics) %>%
+    knitr::kable()
+domain_table
+```
+
+## Examples of bad performance.
+
+```{r}
+sites <-
+    if (!file.exists(here("data", "map_data", "plots.geojson"))) {
+        bind_rows(
+            here("data", "map_data", "aois.geojson") %>%
+                read_sf() %>%
+                mutate(aoi_name = "gallbyveien"),
+            here("data", "map_data", "test_plots.geojson") %>%
+                read_sf() %>%
+                filter(!is.na(aoi_name), aoi_name != "NULL")
+        ) %>%
+        mutate(aoi_name = str_remove(aoi_name, "\\d+")) %>%
+        group_by(aoi_name) %>%
+        mutate(id = row_number()) %>%
+        ungroup() %>%
+        st_write(here("data", "map_data", "plots.geojson"))
+    } else {
+        st_read(here("data", "map_data", "plots.geojson"))
+    }
+
+predictions_my <-
+    here("models", "my_annotations", "my_annotations_yolov8n.pt_640", "predictions_processed", "predictions.shp") %>%
+    read_sf()
+predictions_all <-
+    here("models", "all_annotations", "all_annotations_yolov8m.pt_640", "predictions_processed", "predictions.shp") %>%
+    read_sf()
+reference <-
+    here("data", "map_data", "test_annotations2_sun.geojson") %>% read_sf()
+```
+
+### Braatan
+
+Both models perform poorly on the Braatan site.
+
+```{r}
+library(tmap)
+tmap_mode("view")
+tm_shape(sites) +
+    tm_polygons()
+```
+
+```{r}
+plot_preds_on_site <- function(preds, refs, site, ortho) {
+    ortho <-
+        here("data", "orthomosaics", "test_data") %>%
+        list.files(pattern = ".tif$", full.names = TRUE) %>%
+        keep(function(x) str_detect(x, site$aoi_name)) %>%
+        terra::rast() %>%
+        terra::crop(site)
+
+    preds_on_site <-
+        preds %>%
+        filter(., as.logical(st_intersects(., site, sparse = FALSE)))
+    refs_on_site <-
+        refs %>%
+        filter(., as.logical(st_intersects(., site, sparse = FALSE)))
+    tm_shape(ortho) +
+        tm_rgb() +
+    tm_shape(refs_on_site) +
+        tm_borders(col = "red") +  # TODO: Adjust colors.
+    tm_shape(preds_on_site) +
+        tm_borders(col = "blue")  # TODO: Adjust colors.
+}
+```
+
+1. Braatan1 north
+  - Large trees missed
+
+```{r}
+# TODO: Plot predictions for both models(A & B).
+```
+
+2. Braatan2 south
+  - Small saplings missed by "My annotations"
+
+```{r}
+# TODO: Plot predictions for both models(A & B).
+```
+
+3. Hobol
+  - "All" performs well, "My" have many undetected trees.
+
+```{r}
+# TODO: Plot predictions for both models(A & B).
+```
+
+4. Galbyveien
+
+```{r}
+# TODO: Plot predictions for both models(A & B).
+```
+
+## Reasons for differing performance
+
+- Why does the model trained on my own dataset perform worse?
+  - Limited training data (variation).
+  - Unbalanced train/val split.
+    - Mainly large trees in val.
+    - One image without annotations.
+
+# Conclusion
