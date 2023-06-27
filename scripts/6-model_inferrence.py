@@ -15,7 +15,7 @@ def main():
     models = [
         {
             "name": "my_annotations_yolov8n.pt_640",
-            "conf": 0.60,
+            "conf": 0.34,
         },  # Best performing model for my annotations.
         {
             "name": "all_annotations_yolov8m.pt_640",
