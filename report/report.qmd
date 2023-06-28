@@ -367,14 +367,7 @@ reference <-
 Both models perform poorly on the Braatan site.
 
 ```{r}
-library(tmap)
-tmap_mode("view")
-tm_shape(sites) +
-    tm_polygons()
-```
-
-```{r}
-plot_preds_on_site <- function(preds, refs, site, ortho) {
+plot_preds_on_site <- function(site, preds, refs) {
     ortho <-
         here("data", "orthomosaics", "test_data") %>%
         list.files(pattern = ".tif$", full.names = TRUE) %>%
@@ -391,9 +384,9 @@ plot_preds_on_site <- function(preds, refs, site, ortho) {
     tm_shape(ortho) +
         tm_rgb() +
     tm_shape(refs_on_site) +
-        tm_borders(col = "red") +  # TODO: Adjust colors.
+        tm_borders(col = "red", lwd = 2) +  # TODO: Adjust colors.
     tm_shape(preds_on_site) +
-        tm_borders(col = "blue")  # TODO: Adjust colors.
+        tm_borders(col = "blue", lwd = 2)  # TODO: Adjust colors.
 }
 ```
 
@@ -401,27 +394,79 @@ plot_preds_on_site <- function(preds, refs, site, ortho) {
   - Large trees missed
 
 ```{r}
-# TODO: Plot predictions for both models(A & B).
+#| echo: FALSE
+#| label: fig-braatan1
+#| fig-cap: "Poor detection at site Braatan (1)."
+#| fig-subcap:
+#|   - "My annotations"
+#|   - "All annotations"
+#| layout-ncol: 1
+
+sites %>%
+    filter(aoi_name == "braatan", id == 3) %>%
+    plot_preds_on_site(predictions_my, reference)
+sites %>%
+    filter(aoi_name == "braatan", id == 3) %>%
+    plot_preds_on_site(predictions_all, reference)
 ```
 
-2. Braatan2 south
+1. Braatan2 south
   - Small saplings missed by "My annotations"
 
 ```{r}
-# TODO: Plot predictions for both models(A & B).
+#| echo: FALSE
+#| label: fig-braatan2
+#| fig-cap: "Poor detection at site Braatan (2)."
+#| fig-subcap: 
+#|   - "My annotations"
+#|   - "All annotations"
+#| layout-ncol: 1
+
+sites %>%
+    filter(aoi_name == "braatan", id == 2) %>%
+    plot_preds_on_site(predictions_my, reference)
+sites %>%
+    filter(aoi_name == "braatan", id == 2) %>%
+    plot_preds_on_site(predictions_all, reference)
 ```
 
-3. Hobol
+1. Hobol
   - "All" performs well, "My" have many undetected trees.
 
 ```{r}
-# TODO: Plot predictions for both models(A & B).
+#| echo: FALSE
+#| label: fig-hobol
+#| fig-cap: "Poor detection at site Hobol for My_annotations."
+#| fig-subcap: 
+#|   - "My annotations"
+#|   - "All annotations"
+#| layout-ncol: 1
+
+sites %>%
+    filter(aoi_name == "hobol", id == 2) %>%
+    plot_preds_on_site(predictions_my, reference)
+sites %>%
+    filter(aoi_name == "hobol", id == 2) %>%
+    plot_preds_on_site(predictions_all, reference)
 ```
 
-4. Galbyveien
+1. Galbyveien
 
 ```{r}
-# TODO: Plot predictions for both models(A & B).
+#| echo: FALSE
+#| label: fig-galbyveien
+#| fig-cap: "Poor detection at site Galbyveien."
+#| fig-subcap: 
+#|   - "My annotations"
+#|   - "All annotations"
+#| layout-ncol: 1
+
+sites %>%
+    filter(aoi_name == "galbyveien", id == 2) %>%
+    plot_preds_on_site(predictions_my, reference)
+sites %>%
+    filter(aoi_name == "galbyveien", id == 2) %>%
+    plot_preds_on_site(predictions_all, reference)
 ```
 
 ## Reasons for differing performance
