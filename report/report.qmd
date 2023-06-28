@@ -108,13 +108,13 @@ Two sets of test data was used for evaluating models: **Tiled test data** and **
   - Used for ML metrics evaluation.
   - Tiled and annotated images.
 - **Drone RGB orthomosaics**
-  - Used for evaluating domain metrics.
+  - Used for domain metrics evaluation.
   - Orthomosaics of four sites.
     - Each site contains four plots (~0.1 ha) with tree posistions measured in field.
 
 ## Model training
 
-YOLOv8 models were trained using the dataset **My annotations** and the dataset **All annotations**. A grid search were performed for model sizes *Nano*, *Medium* and *Xtra large* and image sizes *256*, *640* and *1024*. The best mode for each dataset were selected using mAP@.5.
+YOLOv8 models were trained using the dataset **My annotations** and the dataset **All annotations**. A grid search were performed for model sizes *Nano*, *Medium* and *Xtra large* and image sizes *256*, *640* and *1024* (@tbl-search). The best mode for each dataset were selected using mAP@.5.
 
 ```{python}
 #| label: grid-search
@@ -137,7 +137,7 @@ The selected models from the model training were evaluated using machine-learnin
 
 ### ML metrics
 
-Machine learning metrics were evaluated by testing the models against the **tiled test data** using the inbuilt [val mode](<https://docs.ultralytics.com/modes/val/>) at default settings. 
+ML metrics were evaluated by testing the models against the **tiled test data** using the inbuilt [val mode](<https://docs.ultralytics.com/modes/val/>) at default settings. 
 
 ## Domain metrics
 
@@ -228,7 +228,7 @@ training_results <-
 #| warning: FALSE
 #| label: fig-training
 #| fig-cap: Training results
-#| width: 1024
+#| fig-width: 1024
 
 training_plot <-
     training_results %>%
@@ -271,7 +271,7 @@ models = [
 
 ### ML metrics
 
-The best model trained on **All annotations** outperformed the best model trained on **My annotations**. ML metrics of the models are shown in @tbl-mlmetrics.
+There was no large difference in performance between the model trained on **My annotations** or **All annotations**. **All annotations** performed slighty better with an mAP@.5 of 0.38 compared to 0.36 for **My annotations**. ML metrics of the models are shown in @tbl-mlmetrics.
 
 ```{python}
 #| label: collect-ml-metrics
@@ -298,9 +298,9 @@ knitr::kable(py$ml_metrics)
 
 ### Domain
 
-RMSE and MD of predicted trees per. ha are shown in @tbl-domainmetrics. The model trained by **My annotation** perfomed worse than the one trained by **All annotations**. The **All annotations** model perfomed better at all four sites. RMSE and RMSE (%) of all sites combined were respectivley 1262 trees/ha and 81% for **My annotations** and 632 trees/ha and 34% for **All annotations**.
+RMSE and MD of predicted trees per. ha are shown in @tbl-domainmetrics and predicted and observed values are shown in @fig-op. The difference in domain metrics between models were also here quite low but here the model trained on **My annotations** performed better. RMSE and RMSE (%) over all sites were respectivley 623 trees/ha and 42% for **My annotations** and 632 trees/ha and 43% for **All annotations**. Both models struggled with detections on the site Braatan, with RMSE (%) of 74% and 67% respectivley for **My annotations** and *All annotations**. The best performance was found on site Hobol with RMSE (%) of 10% and 9%.
 
-Both models consistently underestimated the number of trees on all sites, **All annotations** underestimated by less. MD and MD (%) of **My annotations** of all sites combined were respectivley 1188 trees/ha and 81% for **My annotations** and 499 trees/ha and 34% for **All annotations**.
+Both models consistently underestimated the number of trees on all sites. MD and MD (%) over all sites were respectivley 473 trees/ha and 32% for **My annotations** and 499 trees/ha and 34% for **All annotations**.
 
 ```{python}
 #| label: collect-domain-metrics
@@ -331,9 +331,45 @@ domain_table <-
 domain_table
 ```
 
+```{r}
+#| echo: FALSE
+#| label: fig-op
+#| fig-cap: "Predicted vs. observed trees/ha. Both models underestimate the number of trees per. ha and struggle with predictions at the sites Braatan and Galbyveien."
+domain_predictions <-
+    map(
+        c( "models\\my_annotations\\my_annotations_yolov8n.pt_640",
+            "models\\all_annotations\\all_annotations_yolov8m.pt_640"),
+        .f = ~{
+            here(.x, "predictions_processed", "domain_predictions.csv") %>%
+            read_sf() %>%
+            mutate(
+                model = basename(.x), .before = 1,
+                reference_dens = as.numeric(reference_dens),
+                predicted_dens = as.numeric(predicted_dens)
+            )
+        }
+    ) %>%
+    bind_rows()
+
+max_value <- max(c(domain_predictions$reference_dens, domain_predictions$predicted_dens))
+
+op_plot <-
+    ggplot(domain_predictions, aes(predicted_dens, reference_dens, color = aoi_name)) +
+        geom_point() +
+        geom_abline() +
+        xlim(0, max_value) +
+        ylim(0, max_value) +
+        labs(x = "Predicted trees/ha", y = "Observed trees/ha") +
+        scale_colour_viridis_d() +
+        facet_wrap(~model, ncol = 1)
+op_plot
+```
+
 ## Examples of bad performance.
 
 ```{r}
+#| label: collect-preds-and-ref
+#| include: FALSE
 sites <-
     if (!file.exists(here("data", "map_data", "plots.geojson"))) {
         bind_rows(
@@ -368,6 +404,8 @@ reference <-
 Both models perform poorly on the Braatan site.
 
 ```{r}
+#| label: plot-preds-func
+#| include: FALSE
 plot_preds_on_site <- function(site, preds, refs) {
     ortho <-
         here("data", "orthomosaics", "test_data") %>%
@@ -391,83 +429,80 @@ plot_preds_on_site <- function(site, preds, refs) {
 }
 ```
 
-1. Braatan1 north
-  - Large trees missed
+```{r}
+#| include: FALSE
+braatan_1_my <-
+    sites %>%
+    filter(aoi_name == "braatan", id == 3) %>%
+    plot_preds_on_site(predictions_my, reference)
+braatan_1_all <-
+    sites %>%
+    filter(aoi_name == "braatan", id == 3) %>%
+    plot_preds_on_site(predictions_all, reference)
+braatan_1_my
+braatan_1_all
+```
 
 ```{r}
 #| echo: FALSE
 #| label: fig-braatan1
-#| fig-cap: "Poor detection at site Braatan (1)."
+#| fig-cap: "Poor detections at Braatan. Many larger trees close together missed by both detectors."
 #| fig-subcap:
 #|   - "My annotations"
 #|   - "All annotations"
 #| layout-ncol: 1
-
-sites %>%
-    filter(aoi_name == "braatan", id == 3) %>%
-    plot_preds_on_site(predictions_my, reference)
-sites %>%
-    filter(aoi_name == "braatan", id == 3) %>%
-    plot_preds_on_site(predictions_all, reference)
+braatan_1_my
+braatan_1_all
 ```
 
-1. Braatan2 south
-  - Small saplings missed by "My annotations"
+```{r}
+#| include: FALSE
+braatan_2_my <-
+    sites %>%
+    filter(aoi_name == "braatan", id == 2) %>%
+    plot_preds_on_site(predictions_my, reference)
+braatan_2_all <-
+    sites %>%
+    filter(aoi_name == "braatan", id == 2) %>%
+    plot_preds_on_site(predictions_all, reference)
+```
 
 ```{r}
 #| echo: FALSE
 #| label: fig-braatan2
-#| fig-cap: "Poor detection at site Braatan (2)."
+#| fig-cap: "Poor detections at Braatan. Small saplings missed by both detectors (pine?)"
 #| fig-subcap: 
 #|   - "My annotations"
 #|   - "All annotations"
 #| layout-ncol: 1
 
-sites %>%
-    filter(aoi_name == "braatan", id == 2) %>%
-    plot_preds_on_site(predictions_my, reference)
-sites %>%
-    filter(aoi_name == "braatan", id == 2) %>%
-    plot_preds_on_site(predictions_all, reference)
+braatan_2_my
+braatan_2_all
 ```
-
-1. Hobol
-  - "All" performs well, "My" have many undetected trees.
 
 ```{r}
-#| echo: FALSE
-#| label: fig-hobol
-#| fig-cap: "Poor detection at site Hobol for My_annotations."
-#| fig-subcap: 
-#|   - "My annotations"
-#|   - "All annotations"
-#| layout-ncol: 1
-
-sites %>%
-    filter(aoi_name == "hobol", id == 2) %>%
+#| include: FALSE
+galbyveien_my <-
+    sites %>%
+    filter(aoi_name == "galbyveien", id == 1) %>%
     plot_preds_on_site(predictions_my, reference)
-sites %>%
-    filter(aoi_name == "hobol", id == 2) %>%
+galbyveien_all <-
+    sites %>%
+    filter(aoi_name == "galbyveien", id == 1) %>%
     plot_preds_on_site(predictions_all, reference)
 ```
-
-1. Galbyveien
 
 ```{r}
 #| echo: FALSE
 #| label: fig-galbyveien
-#| fig-cap: "Poor detection at site Galbyveien."
+#| fig-cap: "Poor detection at site Galbyveien. Undetected smaller saplings."
 #| fig-subcap: 
 #|   - "My annotations"
 #|   - "All annotations"
 #| layout-ncol: 1
 
-sites %>%
-    filter(aoi_name == "galbyveien", id == 2) %>%
-    plot_preds_on_site(predictions_my, reference)
-sites %>%
-    filter(aoi_name == "galbyveien", id == 2) %>%
-    plot_preds_on_site(predictions_all, reference)
+galbyveien_my
+galbyveien_all
 ```
 
 ## Reasons for differing performance
@@ -477,6 +512,8 @@ sites %>%
   - Unbalanced train/val split.
     - Mainly large trees in val.
     - One image without annotations.
+- Larger models did not improve performance
+  - Dataset size to small and/or poor annotation quality.
 
 # Conclusion
 
@@ -487,4 +524,4 @@ sites %>%
   - The effect of image size greatly increases with model size.
 - Training performance and ml metrics are not indicative of domain performance.
   - Confidence threshold is probably set to high for **My annotations**
-  - Caused by inbalance train/val split.
+  - Caused by inbalanced train/val split.

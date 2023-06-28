@@ -48,7 +48,7 @@ data** and **Drone RGB orthomosaics**.
   - Used for ML metrics evaluation.
   - Tiled and annotated images.
 - **Drone RGB orthomosaics**
-  - Used for evaluating domain metrics.
+  - Used for domain metrics evaluation.
   - Orthomosaics of four sites.
     - Each site contains four plots (~0.1 ha) with tree posistions
       measured in field.
@@ -58,7 +58,8 @@ data** and **Drone RGB orthomosaics**.
 YOLOv8 models were trained using the dataset **My annotations** and the
 dataset **All annotations**. A grid search were performed for model
 sizes *Nano*, *Medium* and *Xtra large* and image sizes *256*, *640* and
-*1024*. The best mode for each dataset were selected using mAP@.5.
+*1024* ([Table 2](#tbl-search)). The best mode for each dataset were
+selected using mAP@.5.
 
 <div id="tbl-search">
 
@@ -85,8 +86,8 @@ machine-learning metris and domain metrics on the test data.
 
 ### ML metrics
 
-Machine learning metrics were evaluated by testing the models against
-the **tiled test data** using the inbuilt [val
+ML metrics were evaluated by testing the models against the **tiled test
+data** using the inbuilt [val
 mode](https://docs.ultralytics.com/modes/val/) at default settings.
 
 ## Domain metrics
@@ -170,8 +171,7 @@ earlier epoch) but starts to overfit earlier on the data. mAP@.5 curves
 for models are shown in [Figure 1](#fig-training).
 
 <img src="report_files/figure-commonmark/fig-training-1.png"
-id="fig-training" class="quarto-discovered-preview-image"
-alt="Figure 1: Training results" />
+id="fig-training" alt="Figure 1: Training results" />
 
 ### Model speed
 
@@ -210,9 +210,11 @@ Figure 2: Model speed (size of dots represents image size).
 
 ### ML metrics
 
-The best model trained on **All annotations** outperformed the best
-model trained on **My annotations**. ML metrics of the models are shown
-in [Table 5](#tbl-mlmetrics).
+There was no large difference in performance between the model trained
+on **My annotations** or **All annotations**. **All annotations**
+performed slighty better with an mAP@.5 of 0.38 compared to 0.36 for
+**My annotations**. ML metrics of the models are shown in
+[Table 5](#tbl-mlmetrics).
 
 <div id="tbl-mlmetrics">
 
@@ -228,16 +230,19 @@ Table 5: Machine learnining metrics.
 ### Domain
 
 RMSE and MD of predicted trees per. ha are shown in
-[Table 6](#tbl-domainmetrics). The model trained by **My annotation**
-perfomed worse than the one trained by **All annotations**. The **All
-annotations** model perfomed better at all four sites. RMSE and RMSE (%)
-of all sites combined were respectivley 1262 trees/ha and 81% for **My
-annotations** and 632 trees/ha and 34% for **All annotations**.
+[Table 6](#tbl-domainmetrics) and predicted and observed values are
+shown in [Figure 3](#fig-op). The difference in domain metrics between
+models were also here quite low but here the model trained on **My
+annotations** performed better. RMSE and RMSE (%) over all sites were
+respectivley 623 trees/ha and 42% for **My annotations** and 632
+trees/ha and 43% for **All annotations**. Both models struggled with
+detections on the site Braatan, with RMSE (%) of 74% and 67%
+respectivley for **My annotations** and \*All annotations\*\*. The best
+performance was found on site Hobol with RMSE (%) of 10% and 9%.
 
 Both models consistently underestimated the number of trees on all
-sites, **All annotations** underestimated by less. MD and MD (%) of **My
-annotations** of all sites combined were respectivley 1188 trees/ha and
-81% for **My annotations** and 499 trees/ha and 34% for **All
+sites. MD and MD (%) over all sites were respectivley 473 trees/ha and
+32% for **My annotations** and 499 trees/ha and 34% for **All
 annotations**.
 
 <div id="tbl-domainmetrics">
@@ -259,93 +264,33 @@ Table 6: Domain metrics.
 
 </div>
 
+<img src="report_files/figure-commonmark/fig-op-1.png" id="fig-op"
+alt="Figure 3: Predicted vs. observed trees/ha. Both models underestimate the number of trees per. ha and struggle with predictions at the sites Braatan and Galbyveien." />
+
 ## Examples of bad performance.
-
-``` r
-sites <-
-    if (!file.exists(here("data", "map_data", "plots.geojson"))) {
-        bind_rows(
-            here("data", "map_data", "aois.geojson") %>%
-                read_sf() %>%
-                mutate(aoi_name = "galbyveien"),
-            here("data", "map_data", "test_plots.geojson") %>%
-                read_sf() %>%
-                filter(!is.na(aoi_name), aoi_name != "NULL")
-        ) %>%
-        mutate(aoi_name = str_remove(aoi_name, "\\d+")) %>%
-        group_by(aoi_name) %>%
-        mutate(id = row_number()) %>%
-        ungroup() %>%
-        st_write(here("data", "map_data", "plots.geojson"))
-    } else {
-        st_read(here("data", "map_data", "plots.geojson"))
-    }
-```
-
-    Reading layer `plots' from data source 
-      `D:\DeepLearning_HomeExercise\data\map_data\plots.geojson' 
-      using driver `GeoJSON'
-    Simple feature collection with 16 features and 2 fields
-    Geometry type: MULTIPOLYGON
-    Dimension:     XY
-    Bounding box:  xmin: 594234.4 ymin: 6605783 xmax: 611125.2 ymax: 6622639
-    Projected CRS: ETRS89 / UTM zone 32N
-
-``` r
-predictions_my <-
-    here("models", "my_annotations", "my_annotations_yolov8n.pt_640", "predictions_processed", "predictions.shp") %>%
-    read_sf()
-predictions_all <-
-    here("models", "all_annotations", "all_annotations_yolov8m.pt_640", "predictions_processed", "predictions.shp") %>%
-    read_sf()
-reference <-
-    here("data", "map_data", "test_annotations2_sun.geojson") %>% read_sf()
-```
 
 ### Braatan
 
 Both models perform poorly on the Braatan site.
 
-``` r
-plot_preds_on_site <- function(site, preds, refs) {
-    ortho <-
-        here("data", "orthomosaics", "test_data") %>%
-        list.files(pattern = ".tif$", full.names = TRUE) %>%
-        keep(function(x) str_detect(x, site$aoi_name)) %>%
-        terra::rast() %>%
-        terra::crop(site)
 
-    preds_on_site <-
-        preds %>%
-        filter(., as.logical(st_intersects(., site, sparse = FALSE)))
-    refs_on_site <-
-        refs %>%
-        filter(., as.logical(st_intersects(., site, sparse = FALSE)))
-    tm_shape(ortho) +
-        tm_rgb() +
-    tm_shape(refs_on_site) +
-        tm_borders(col = "red", lwd = 2) +  # TODO: Adjust colors.
-    tm_shape(preds_on_site) +
-        tm_borders(col = "blue", lwd = 2)  # TODO: Adjust colors.
-}
-```
+    |---------|---------|---------|---------|
+    =========================================
+                                              
 
-1.  Braatan1 north
 
-- Large trees missed
-
-<!-- -->
-
-    stars object downsampled to 1012 by 989 cells. See tm_shape manual (argument raster.downsample)
-    stars object downsampled to 1012 by 989 cells. See tm_shape manual (argument raster.downsample)
+    |---------|---------|---------|---------|
+    =========================================
+                                              
 
 <img src="report_files/figure-commonmark/fig-braatan1-1.png"
-id="fig-braatan1-1" alt="Figure 3: My annotations" />
+id="fig-braatan1-1" alt="Figure 4: My annotations" />
 
 <img src="report_files/figure-commonmark/fig-braatan1-2.png"
-id="fig-braatan1-2" alt="Figure 4: All annotations" />
+id="fig-braatan1-2" alt="Figure 5: All annotations" />
 
-Poor detection at site Braatan (1).
+Poor detections at Braatan. Many larger trees close together missed by
+both detectors.
 
 1.  Braatan2 south
 
@@ -353,56 +298,46 @@ Poor detection at site Braatan (1).
 
 <!-- -->
 
-    Warning in CPL_read_gdal(as.character(x), as.character(options),
-    as.character(driver), : GDAL Message 1: The definition of geographic CRS
-    EPSG:4258 got from GeoTIFF keys is not the same as the one from the EPSG
-    registry, which may cause issues during reprojection operations. Set
-    GTIFF_SRS_SOURCE configuration option to EPSG to use official parameters
-    (overriding the ones from GeoTIFF keys), or to GEOKEYS to use custom values
-    from GeoTIFF keys and drop the EPSG code.
 
-    stars object downsampled to 1010 by 991 cells. See tm_shape manual (argument raster.downsample)
-    stars object downsampled to 1010 by 991 cells. See tm_shape manual (argument raster.downsample)
+    |---------|---------|---------|---------|
+    =========================================
+                                              
+
+
+    |---------|---------|---------|---------|
+    =========================================
+                                              
 
 <img src="report_files/figure-commonmark/fig-braatan2-1.png"
-id="fig-braatan2-1" alt="Figure 5: My annotations" />
+id="fig-braatan2-1" alt="Figure 6: My annotations" />
 
 <img src="report_files/figure-commonmark/fig-braatan2-2.png"
-id="fig-braatan2-2" alt="Figure 6: All annotations" />
+id="fig-braatan2-2" alt="Figure 7: All annotations" />
 
-Poor detection at site Braatan (2).
-
-1.  Hobol
-
-- “All” performs well, “My” have many undetected trees.
-
-<!-- -->
-
-    stars object downsampled to 947 by 1056 cells. See tm_shape manual (argument raster.downsample)
-    stars object downsampled to 947 by 1056 cells. See tm_shape manual (argument raster.downsample)
-
-<img src="report_files/figure-commonmark/fig-hobol-1.png"
-id="fig-hobol-1" alt="Figure 7: My annotations" />
-
-<img src="report_files/figure-commonmark/fig-hobol-2.png"
-id="fig-hobol-2" alt="Figure 8: All annotations" />
-
-Poor detection at site Hobol for My_annotations.
+Poor detections at Braatan. Small saplings missed by both detectors
+(pine?)
 
 1.  Galbyveien
 
 <!-- -->
 
-    stars object downsampled to 1059 by 945 cells. See tm_shape manual (argument raster.downsample)
-    stars object downsampled to 1059 by 945 cells. See tm_shape manual (argument raster.downsample)
+
+    |---------|---------|---------|---------|
+    =========================================
+                                              
+
+
+    |---------|---------|---------|---------|
+    =========================================
+                                              
 
 <img src="report_files/figure-commonmark/fig-galbyveien-1.png"
-id="fig-galbyveien-1" alt="Figure 9: My annotations" />
+id="fig-galbyveien-1" alt="Figure 8: My annotations" />
 
 <img src="report_files/figure-commonmark/fig-galbyveien-2.png"
-id="fig-galbyveien-2" alt="Figure 10: All annotations" />
+id="fig-galbyveien-2" alt="Figure 9: All annotations" />
 
-Poor detection at site Galbyveien.
+Poor detection at site Galbyveien. Undetected smaller saplings.
 
 ## Reasons for differing performance
 
@@ -411,6 +346,8 @@ Poor detection at site Galbyveien.
   - Unbalanced train/val split.
     - Mainly large trees in val.
     - One image without annotations.
+- Larger models did not improve performance
+  - Dataset size to small and/or poor annotation quality.
 
 # Conclusion
 
@@ -423,4 +360,4 @@ Poor detection at site Galbyveien.
 - Training performance and ml metrics are not indicative of domain
   performance.
   - Confidence threshold is probably set to high for **My annotations**
-  - Caused by inbalance train/val split.
+  - Caused by inbalanced train/val split.
