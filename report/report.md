@@ -1,9 +1,7 @@
 # Home excericse - NOVA course on deep learning in remote sensing
 Julius Wold
 
-# Introduction
-
-## Objective
+# Objective
 
 Compare the effect of training a seedling detector on your own annotated
 dataset vs. the full dataset on the detector’s performance.
@@ -12,16 +10,16 @@ dataset vs. the full dataset on the detector’s performance.
 
 ## Annotations
 
-Two sets of annotations were used for model tranining: “My annotations”
-and “All annotations”.
+Two sets of annotations were used for model tranining: **My
+annotations** and **All annotations**.
 
-- “My annotations”
+- **My annotations**
   - Annotations made by the author.
-- “All annotations”
+- **All annotations**
   - Annotations from all students merged.
 
-“My annotations” consists of 48 images with 280 annotations of trees
-while “All annotations” consists of 387 images with 5062 annotations.
+**My annotations** consists of 48 images with 280 annotations of trees
+while **All annotations** consists of 387 images with 5062 annotations.
 70% of data was randomly assigned to training and 30% to validation. An
 overview of images and annotations used in the tranining and validation
 split are shown in [Table 1](#tbl-training).
@@ -41,12 +39,26 @@ Table 1: Number of images and annotatations for each dataset.
 
 </div>
 
+## Test data
+
+Two sets of test data was used for evaluating models: **Tiled test
+data** and **Drone RGB orthomosaics**.
+
+- **Tiled test data**
+  - Used for ML metrics evaluation.
+  - Tiled and annotated images.
+- **Drone RGB orthomosaics**
+  - Used for evaluating domain metrics.
+  - Orthomosaics of four sites.
+    - Each site contains four plots (~0.1 ha) with tree posistions
+      measured in field.
+
 ## Model training
 
-YOLOv8 models were trained using the dataset “My annotations” and the
-dataset “All annotations”. A grid search were performed for model sizes
-“Nano”, “Medium” and “Xtra large” and image sizes 256, 640 and 1024. The
-best mode for each dataset were selected using mAP@.5.
+YOLOv8 models were trained using the dataset **My annotations** and the
+dataset **All annotations**. A grid search were performed for model
+sizes *Nano*, *Medium* and *Xtra large* and image sizes *256*, *640* and
+*1024*. The best mode for each dataset were selected using mAP@.5.
 
 <div id="tbl-search">
 
@@ -74,13 +86,15 @@ machine-learning metris and domain metrics on the test data.
 ### ML metrics
 
 Machine learning metrics were evaluated by testing the models against
-tiled test data. Residual Mean Square Error (RMSE) and Mean Deviation
-(MD) were calculated according to formula [Equation 1](#eq-rmse) and
-[Equation 2](#eq-md) for observed and predicted trees per ha.
-Additionally RMSE (%) and MD (%) were calculated by dividing RMSE and MD
-by the observed mean.
+the **tiled test data** using the inbuilt [val
+mode](https://docs.ultralytics.com/modes/val/) at default settings.
 
 ## Domain metrics
+
+Residual Mean Square Error (RMSE) and Mean Deviation (MD) were
+calculated according to [Equation 1](#eq-rmse) and [Equation 2](#eq-md)
+for trees per ha. Additionally RMSE (%) and MD (%) were calculated as
+size of RMSE and MD relative to the observed mean.
 
 <span id="eq-rmse">$$
 RMSE = \sqrt{\frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})^2}{n}}
@@ -99,14 +113,15 @@ MD = \frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})}{n}
 
 ### Training performance
 
-Models trained by the “My annotation” dataset achived better performance
-in training than the models trained on “All annotations”. For “My
-annotation” the highest performance was acchived by the nano model with
-image size 640 (mAP@.5 of 0.59 at epoch 94). The best perfoming model
-for “All annotations” was the meduim model with an image size of 640
-(mAP@.5 of 0.36 at epoch 42). Summary of training results are shown in
-[Table 3](#tbl-trainingperformance-1) and
-[Table 4](#tbl-trainingperformance-2).
+Models trained by the **My annotation** dataset achived better
+performance in training than the models trained on **All annotations**.
+For **My annotation** the highest performance was achived by the *nano*
+model with image size *640* (mAP@.5 of 0.59 at epoch 94). The best
+perfoming model for **All annotations** was the *meduim* model with an
+image size of *640* (mAP@.5 of 0.36 at epoch 42). Summary of training
+results for are shown in [Table 3](#tbl-trainingperformance-1) and
+[Table 4](#tbl-trainingperformance-2) for **My annotation** and **All
+annotations** respectivley.
 
 <div id="tbl-trainingperformance-1">
 
@@ -147,22 +162,25 @@ Table 4: All annotations
 Training performance of best models.
 
 There was little impact on training perfomance with varying image size
-and model size for models trained with “All annotations”. For models
-trained with “My annotations” a difference can be observed between nano
-models and medium and xtra large models. Medium and xtra large seems to
-improve faster than nano models (higher performance at earlier epoch)
-but are more prone to overfitting on the data. mAP@.5 curves for models
-are shown in [Figure 1](#fig-training).
+and model size for models trained with **All annotations**. For models
+trained with **My annotations** a difference can be observed between
+*nano* models and *medium* and *xtra large* models. *Medium* and *xtra
+large* seems to improve faster than *nano* models (higher performance at
+earlier epoch) but starts to overfit earlier on the data. mAP@.5 curves
+for models are shown in [Figure 1](#fig-training).
 
 <img src="report_files/figure-commonmark/fig-training-1.png"
-id="fig-training" alt="Figure 1: Training results" />
+id="fig-training" class="quarto-discovered-preview-image"
+alt="Figure 1: Training results" />
 
 ### Model speed
 
-Increasing model size (Nano -\> Medium -\> Xtra large) resulted in
+Increasing model size (*Nano* -\> *Medium* -\> *Xtra large*) resulted in
 slower models. The effect of image size on model speed was greater with
-increasing model size. Image size had little effect on nano models but
-lead to much slower models for medium and xtra large models.
+increasing model size. Image size had little effect on *nano* models but
+lead to much slower models for *medium* and *xtra large* models.
+[Figure 2](#fig-modelspeed) shows the effect of model size and image
+size on model speed.
 
 <div id="fig-modelspeed">
 
@@ -192,9 +210,9 @@ Figure 2: Model speed (size of dots represents image size).
 
 ### ML metrics
 
-The best model trained on “All annotations” outperformed the best model
-trained on “My annotations”. ML metrics of the models are shown in
-[Table 5](#tbl-mlmetrics).
+The best model trained on **All annotations** outperformed the best
+model trained on **My annotations**. ML metrics of the models are shown
+in [Table 5](#tbl-mlmetrics).
 
 <div id="tbl-mlmetrics">
 
@@ -210,17 +228,27 @@ Table 5: Machine learnining metrics.
 ### Domain
 
 RMSE and MD of predicted trees per. ha are shown in
-[Table 6](#tbl-domainmetrics).
+[Table 6](#tbl-domainmetrics). The model trained by **My annotation**
+perfomed worse than the one trained by **All annotations**. The **All
+annotations** model perfomed better at all four sites. RMSE and RMSE (%)
+of all sites combined were respectivley 1262 trees/ha and 81% for **My
+annotations** and 632 trees/ha and 34% for **All annotations**.
+
+Both models consistently underestimated the number of trees on all
+sites, **All annotations** underestimated by less. MD and MD (%) of **My
+annotations** of all sites combined were respectivley 1188 trees/ha and
+81% for **My annotations** and 499 trees/ha and 34% for **All
+annotations**.
 
 <div id="tbl-domainmetrics">
 
 | Model                          | aoi_name   | RMSE | RMSE (%) |   MD | MD (%) |
 |:-------------------------------|:-----------|-----:|---------:|-----:|-------:|
-| my_annotations_yolov8n.pt_640  | braatan    | 1436 |       98 | 1368 |     94 |
-| my_annotations_yolov8n.pt_640  | galbyveien | 1613 |       80 | 1574 |     78 |
-| my_annotations_yolov8n.pt_640  | hobol      |  761 |       70 |  759 |     70 |
-| my_annotations_yolov8n.pt_640  | krakstad   | 1063 |       81 | 1054 |     80 |
-| my_annotations_yolov8n.pt_640  | all        | 1262 |       86 | 1188 |     81 |
+| my_annotations_yolov8n.pt_640  | braatan    | 1077 |       74 | 1018 |     70 |
+| my_annotations_yolov8n.pt_640  | galbyveien |  504 |       25 |  475 |     23 |
+| my_annotations_yolov8n.pt_640  | hobol      |  111 |       10 |   57 |      5 |
+| my_annotations_yolov8n.pt_640  | krakstad   |  357 |       27 |  344 |     26 |
+| my_annotations_yolov8n.pt_640  | all        |  623 |       42 |  473 |     32 |
 | all_annotations_yolov8m.pt_640 | braatan    |  981 |       67 |  891 |     61 |
 | all_annotations_yolov8m.pt_640 | galbyveien |  692 |       34 |  662 |     33 |
 | all_annotations_yolov8m.pt_640 | hobol      |   99 |        9 |   90 |      8 |
@@ -231,4 +259,168 @@ Table 6: Domain metrics.
 
 </div>
 
+## Examples of bad performance.
+
+``` r
+sites <-
+    if (!file.exists(here("data", "map_data", "plots.geojson"))) {
+        bind_rows(
+            here("data", "map_data", "aois.geojson") %>%
+                read_sf() %>%
+                mutate(aoi_name = "galbyveien"),
+            here("data", "map_data", "test_plots.geojson") %>%
+                read_sf() %>%
+                filter(!is.na(aoi_name), aoi_name != "NULL")
+        ) %>%
+        mutate(aoi_name = str_remove(aoi_name, "\\d+")) %>%
+        group_by(aoi_name) %>%
+        mutate(id = row_number()) %>%
+        ungroup() %>%
+        st_write(here("data", "map_data", "plots.geojson"))
+    } else {
+        st_read(here("data", "map_data", "plots.geojson"))
+    }
+```
+
+    Reading layer `plots' from data source 
+      `D:\DeepLearning_HomeExercise\data\map_data\plots.geojson' 
+      using driver `GeoJSON'
+    Simple feature collection with 16 features and 2 fields
+    Geometry type: MULTIPOLYGON
+    Dimension:     XY
+    Bounding box:  xmin: 594234.4 ymin: 6605783 xmax: 611125.2 ymax: 6622639
+    Projected CRS: ETRS89 / UTM zone 32N
+
+``` r
+predictions_my <-
+    here("models", "my_annotations", "my_annotations_yolov8n.pt_640", "predictions_processed", "predictions.shp") %>%
+    read_sf()
+predictions_all <-
+    here("models", "all_annotations", "all_annotations_yolov8m.pt_640", "predictions_processed", "predictions.shp") %>%
+    read_sf()
+reference <-
+    here("data", "map_data", "test_annotations2_sun.geojson") %>% read_sf()
+```
+
+### Braatan
+
+Both models perform poorly on the Braatan site.
+
+``` r
+plot_preds_on_site <- function(site, preds, refs) {
+    ortho <-
+        here("data", "orthomosaics", "test_data") %>%
+        list.files(pattern = ".tif$", full.names = TRUE) %>%
+        keep(function(x) str_detect(x, site$aoi_name)) %>%
+        terra::rast() %>%
+        terra::crop(site)
+
+    preds_on_site <-
+        preds %>%
+        filter(., as.logical(st_intersects(., site, sparse = FALSE)))
+    refs_on_site <-
+        refs %>%
+        filter(., as.logical(st_intersects(., site, sparse = FALSE)))
+    tm_shape(ortho) +
+        tm_rgb() +
+    tm_shape(refs_on_site) +
+        tm_borders(col = "red", lwd = 2) +  # TODO: Adjust colors.
+    tm_shape(preds_on_site) +
+        tm_borders(col = "blue", lwd = 2)  # TODO: Adjust colors.
+}
+```
+
+1.  Braatan1 north
+
+- Large trees missed
+
+<!-- -->
+
+    stars object downsampled to 1012 by 989 cells. See tm_shape manual (argument raster.downsample)
+    stars object downsampled to 1012 by 989 cells. See tm_shape manual (argument raster.downsample)
+
+<img src="report_files/figure-commonmark/fig-braatan1-1.png"
+id="fig-braatan1-1" alt="Figure 3: My annotations" />
+
+<img src="report_files/figure-commonmark/fig-braatan1-2.png"
+id="fig-braatan1-2" alt="Figure 4: All annotations" />
+
+Poor detection at site Braatan (1).
+
+1.  Braatan2 south
+
+- Small saplings missed by “My annotations”
+
+<!-- -->
+
+    Warning in CPL_read_gdal(as.character(x), as.character(options),
+    as.character(driver), : GDAL Message 1: The definition of geographic CRS
+    EPSG:4258 got from GeoTIFF keys is not the same as the one from the EPSG
+    registry, which may cause issues during reprojection operations. Set
+    GTIFF_SRS_SOURCE configuration option to EPSG to use official parameters
+    (overriding the ones from GeoTIFF keys), or to GEOKEYS to use custom values
+    from GeoTIFF keys and drop the EPSG code.
+
+    stars object downsampled to 1010 by 991 cells. See tm_shape manual (argument raster.downsample)
+    stars object downsampled to 1010 by 991 cells. See tm_shape manual (argument raster.downsample)
+
+<img src="report_files/figure-commonmark/fig-braatan2-1.png"
+id="fig-braatan2-1" alt="Figure 5: My annotations" />
+
+<img src="report_files/figure-commonmark/fig-braatan2-2.png"
+id="fig-braatan2-2" alt="Figure 6: All annotations" />
+
+Poor detection at site Braatan (2).
+
+1.  Hobol
+
+- “All” performs well, “My” have many undetected trees.
+
+<!-- -->
+
+    stars object downsampled to 947 by 1056 cells. See tm_shape manual (argument raster.downsample)
+    stars object downsampled to 947 by 1056 cells. See tm_shape manual (argument raster.downsample)
+
+<img src="report_files/figure-commonmark/fig-hobol-1.png"
+id="fig-hobol-1" alt="Figure 7: My annotations" />
+
+<img src="report_files/figure-commonmark/fig-hobol-2.png"
+id="fig-hobol-2" alt="Figure 8: All annotations" />
+
+Poor detection at site Hobol for My_annotations.
+
+1.  Galbyveien
+
+<!-- -->
+
+    stars object downsampled to 1059 by 945 cells. See tm_shape manual (argument raster.downsample)
+    stars object downsampled to 1059 by 945 cells. See tm_shape manual (argument raster.downsample)
+
+<img src="report_files/figure-commonmark/fig-galbyveien-1.png"
+id="fig-galbyveien-1" alt="Figure 9: My annotations" />
+
+<img src="report_files/figure-commonmark/fig-galbyveien-2.png"
+id="fig-galbyveien-2" alt="Figure 10: All annotations" />
+
+Poor detection at site Galbyveien.
+
+## Reasons for differing performance
+
+- Why does the model trained on my own dataset perform worse?
+  - Limited training data (variation).
+  - Unbalanced train/val split.
+    - Mainly large trees in val.
+    - One image without annotations.
+
 # Conclusion
+
+- Good quality training data is important.
+- Quatity of trainng data is also important.
+  - Altough my annotations might be better than average student?, few
+    observations can lead to imbalanced training.
+- Model size has the largest impact on model speed.
+  - The effect of image size greatly increases with model size.
+- Training performance and ml metrics are not indicative of domain
+  performance.
+  - Confidence threshold is probably set to high for **My annotations**
+  - Caused by inbalance train/val split.
