@@ -1,5 +1,9 @@
 # Home excericse - NOVA course on deep learning in remote sensing
 Julius Wold
+2023-06-29
+
+Code used for experiment can be found in [this
+repository](https://github.com/juliwold/DeepLearning_HomeExercise).
 
 # Objective
 
@@ -58,7 +62,7 @@ data** and **Drone RGB orthomosaics**.
 YOLOv8 models were trained using the dataset **My annotations** and the
 dataset **All annotations**. A grid search were performed for model
 sizes *Nano*, *Medium* and *Xtra large* and image sizes *256*, *640* and
-*1024* ([Table 2](#tbl-search)). The best mode for each dataset were
+*1024* ([Table 2](#tbl-search)). The best model for each dataset were
 selected using mAP@.5.
 
 <div id="tbl-search">
@@ -90,7 +94,7 @@ ML metrics were evaluated by testing the models against the **tiled test
 data** using the inbuilt [val
 mode](https://docs.ultralytics.com/modes/val/) at default settings.
 
-## Domain metrics
+### Domain metrics
 
 Residual Mean Square Error (RMSE) and Mean Deviation (MD) were
 calculated according to [Equation 1](#eq-rmse) and [Equation 2](#eq-md)
@@ -98,11 +102,11 @@ for trees per ha. Additionally RMSE (%) and MD (%) were calculated as
 size of RMSE and MD relative to the observed mean.
 
 <span id="eq-rmse">$$
-RMSE = \sqrt{\frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})^2}{n}}
+RMSE = \sqrt{\frac{\Sigma_{i=1}^{n}(\hat{y_i} - y_i)^2}{n}}
  \qquad(1)$$</span>
 
 <span id="eq-md">$$
-MD = \frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})}{n}
+MD = \frac{\Sigma_{i=1}^{n}(\hat{y_i} - y_i)}{n}
  \qquad(2)$$</span>
 
 # Results & Discussion
@@ -114,14 +118,14 @@ MD = \frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})}{n}
 
 ### Training performance
 
-Models trained by the **My annotation** dataset achived better
+Models trained by the **My annotations** dataset achived better
 performance in training than the models trained on **All annotations**.
-For **My annotation** the highest performance was achived by the *nano*
+For **My annotations** the highest performance was achived by the *nano*
 model with image size *640* (mAP@.5 of 0.59 at epoch 94). The best
 perfoming model for **All annotations** was the *meduim* model with an
 image size of *640* (mAP@.5 of 0.36 at epoch 42). Summary of training
 results for are shown in [Table 3](#tbl-trainingperformance-1) and
-[Table 4](#tbl-trainingperformance-2) for **My annotation** and **All
+[Table 4](#tbl-trainingperformance-2) for **My annotations** and **All
 annotations** respectivley.
 
 <div id="tbl-trainingperformance-1">
@@ -170,6 +174,10 @@ large* seems to improve faster than *nano* models (higher performance at
 earlier epoch) but starts to overfit earlier on the data. mAP@.5 curves
 for models are shown in [Figure 1](#fig-training).
 
+It is suprising that *xtra large* models did not perform better than the
+smaller model sizes, low quality of annotations or the small size of the
+dataset might be reasons for this.
+
 <img src="report_files/figure-commonmark/fig-training-1.png"
 id="fig-training" alt="Figure 1: Training results" />
 
@@ -210,7 +218,7 @@ Figure 2: Model speed (size of dots represents image size).
 
 ### ML metrics
 
-There was no large difference in performance between the model trained
+There was no large difference in performance between the models trained
 on **My annotations** or **All annotations**. **All annotations**
 performed slighty better with an mAP@.5 of 0.38 compared to 0.36 for
 **My annotations**. ML metrics of the models are shown in
@@ -227,7 +235,7 @@ Table 5: Machine learnining metrics.
 
 </div>
 
-### Domain
+### Domain metrics
 
 RMSE and MD of predicted trees per. ha are shown in
 [Table 6](#tbl-domainmetrics) and predicted and observed values are
@@ -241,24 +249,24 @@ respectivley for **My annotations** and \*All annotations\*\*. The best
 performance was found on site Hobol with RMSE (%) of 10% and 9%.
 
 Both models consistently underestimated the number of trees on all
-sites. MD and MD (%) over all sites were respectivley 473 trees/ha and
-32% for **My annotations** and 499 trees/ha and 34% for **All
+sites. MD and MD (%) over all sites were respectivley -473 trees/ha and
+-32% for **My annotations** and -499 trees/ha and -34% for **All
 annotations**.
 
 <div id="tbl-domainmetrics">
 
-| Model                          | aoi_name   | RMSE | RMSE (%) |   MD | MD (%) |
-|:-------------------------------|:-----------|-----:|---------:|-----:|-------:|
-| my_annotations_yolov8n.pt_640  | braatan    | 1077 |       74 | 1018 |     70 |
-| my_annotations_yolov8n.pt_640  | galbyveien |  504 |       25 |  475 |     23 |
-| my_annotations_yolov8n.pt_640  | hobol      |  111 |       10 |   57 |      5 |
-| my_annotations_yolov8n.pt_640  | krakstad   |  357 |       27 |  344 |     26 |
-| my_annotations_yolov8n.pt_640  | all        |  623 |       42 |  473 |     32 |
-| all_annotations_yolov8m.pt_640 | braatan    |  981 |       67 |  891 |     61 |
-| all_annotations_yolov8m.pt_640 | galbyveien |  692 |       34 |  662 |     33 |
-| all_annotations_yolov8m.pt_640 | hobol      |   99 |        9 |   90 |      8 |
-| all_annotations_yolov8m.pt_640 | krakstad   |  386 |       29 |  353 |     27 |
-| all_annotations_yolov8m.pt_640 | all        |  632 |       43 |  499 |     34 |
+| Model                          | aoi_name   | RMSE | RMSE (%) |    MD | MD (%) |
+|:-------------------------------|:-----------|-----:|---------:|------:|-------:|
+| my_annotations_yolov8n.pt_640  | braatan    | 1077 |       74 | -1018 |    -70 |
+| my_annotations_yolov8n.pt_640  | galbyveien |  504 |       25 |  -475 |    -23 |
+| my_annotations_yolov8n.pt_640  | hobol      |  111 |       10 |   -57 |     -5 |
+| my_annotations_yolov8n.pt_640  | krakstad   |  357 |       27 |  -344 |    -26 |
+| my_annotations_yolov8n.pt_640  | all        |  623 |       42 |  -473 |    -32 |
+| all_annotations_yolov8m.pt_640 | braatan    |  981 |       67 |  -891 |    -61 |
+| all_annotations_yolov8m.pt_640 | galbyveien |  692 |       34 |  -662 |    -33 |
+| all_annotations_yolov8m.pt_640 | hobol      |   99 |        9 |   -90 |     -8 |
+| all_annotations_yolov8m.pt_640 | krakstad   |  386 |       29 |  -353 |    -27 |
+| all_annotations_yolov8m.pt_640 | all        |  632 |       43 |  -499 |    -34 |
 
 Table 6: Domain metrics.
 
@@ -269,19 +277,32 @@ alt="Figure 3: Predicted vs. observed trees/ha. Both models underestimate the 
 
 ## Examples of bad performance.
 
-### Braatan
+Both detectors performed poorly at the sites Braatan and Galbyveien. The
+first example is shown in [Figure 4](#fig-braatan1-1) and
+[Figure 5](#fig-braatan1-2), both detectors struggle with small saplings
+and trees clumped together. Examples shown in
+[Figure 6](#fig-braatan2-1) and [Figure 7](#fig-braatan2-2) and
+[Figure 8](#fig-galbyveien-1) and [Figure 9](#fig-galbyveien-2) both
+show problems with detection of small saplings.
 
-Both models perform poorly on the Braatan site.
+Improving the annotation quality would likley be the best strategy for
+improving the performance of models, especially for the small saplings.
+Many of the small saplings are likley to be unnannotated since they are
+difficult to detect for unexperienced people, which will negativly
+effect the models performance on small saplings. Saplings of pine are
+probably affected more by this, as they are more difficult to detect in
+annotation.
 
+Increasing the value of the hyperparameter *imgsz* could also be a good
+strategy of improving performance on small saplings, as the size of the
+saplings in the image is quite low. Increasing image size from the
+default had little effect in this experiment, poor quality of
+annotations on small saplings can be a cause for this.
 
-    |---------|---------|---------|---------|
-    =========================================
-                                              
-
-
-    |---------|---------|---------|---------|
-    =========================================
-                                              
+Improving the performance of trees clustered togheter is probably more
+difficult since the models need to differentiate between clustered trees
+and windfallen trees. Improving annotation quality would likley be the
+best option.
 
 <img src="report_files/figure-commonmark/fig-braatan1-1.png"
 id="fig-braatan1-1" alt="Figure 4: My annotations" />
@@ -292,22 +313,6 @@ id="fig-braatan1-2" alt="Figure 5: All annotations" />
 Poor detections at Braatan. Many larger trees close together missed by
 both detectors.
 
-1.  Braatan2 south
-
-- Small saplings missed by “My annotations”
-
-<!-- -->
-
-
-    |---------|---------|---------|---------|
-    =========================================
-                                              
-
-
-    |---------|---------|---------|---------|
-    =========================================
-                                              
-
 <img src="report_files/figure-commonmark/fig-braatan2-1.png"
 id="fig-braatan2-1" alt="Figure 6: My annotations" />
 
@@ -317,20 +322,6 @@ id="fig-braatan2-2" alt="Figure 7: All annotations" />
 Poor detections at Braatan. Small saplings missed by both detectors
 (pine?)
 
-1.  Galbyveien
-
-<!-- -->
-
-
-    |---------|---------|---------|---------|
-    =========================================
-                                              
-
-
-    |---------|---------|---------|---------|
-    =========================================
-                                              
-
 <img src="report_files/figure-commonmark/fig-galbyveien-1.png"
 id="fig-galbyveien-1" alt="Figure 8: My annotations" />
 
@@ -339,25 +330,25 @@ id="fig-galbyveien-2" alt="Figure 9: All annotations" />
 
 Poor detection at site Galbyveien. Undetected smaller saplings.
 
-## Reasons for differing performance
+## Comparison of models
 
-- Why does the model trained on my own dataset perform worse?
-  - Limited training data (variation).
-  - Unbalanced train/val split.
-    - Mainly large trees in val.
-    - One image without annotations.
-- Larger models did not improve performance
-  - Dataset size to small and/or poor annotation quality.
+There was little difference in performance between the two sets of
+annotations. **My annotations** consisting of 48 images with 280
+annotaitons performed similar to **All annotations** consisting of 387
+images with 5062 annotations. Higher quality of annotations in **My
+annotations** may compensate for the decrease in dataset size compared
+to **All annotations**. The larger dataset size of **All annotations**
+might also be the reason for the *medium* size model performing best,
+compared to the *nano* model selected for **My annotations**.
 
 # Conclusion
 
-- Good quality training data is important.
-- Quatity of trainng data is also important.
-  - Altough my annotations might be better than average student?, few
-    observations can lead to imbalanced training.
+- Quality of annotations is more important than quantity of annotations.
+  - My set of 48 annotated images performed similar to the dataset of
+    387 images with annotations.
 - Model size has the largest impact on model speed.
-  - The effect of image size greatly increases with model size.
-- Training performance and ml metrics are not indicative of domain
-  performance.
-  - Confidence threshold is probably set to high for **My annotations**
-  - Caused by inbalanced train/val split.
+  - The effect of image size increases with model size.
+- Training performance is not representative for domain performance.
+  - **All annotations** performed worse than **My annotations** in
+    training while the difference assessed by ML or domain metrics were
+    minimal.
