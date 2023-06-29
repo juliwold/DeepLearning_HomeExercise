@@ -139,16 +139,16 @@ The selected models from the model training were evaluated using machine-learnin
 
 ML metrics were evaluated by testing the models against the **tiled test data** using the inbuilt [val mode](<https://docs.ultralytics.com/modes/val/>) at default settings. 
 
-## Domain metrics
+### Domain metrics
 
 Residual Mean Square Error (RMSE) and Mean Deviation (MD) were calculated according to @eq-rmse and @eq-md for trees per ha. Additionally RMSE (%) and MD (%) were calculated as size of RMSE and MD relative to the observed mean.
 
 $$
-RMSE = \sqrt{\frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})^2}{n}}
+RMSE = \sqrt{\frac{\Sigma_{i=1}^{n}(\hat{y_i} - y_i)^2}{n}}
 $$ {#eq-rmse}
 
 $$
-MD = \frac{\Sigma_{i=1}^{n}(y_i - \hat{y_i})}{n}
+MD = \frac{\Sigma_{i=1}^{n}(\hat{y_i} - y_i)}{n}
 $$ {#eq-md}
 
 # Results & Discussion

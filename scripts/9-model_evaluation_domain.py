@@ -56,8 +56,8 @@ def main():
             dens_predicted = n_predicted / aoi_area
 
             # Calculate residuals.
-            residual_n = n_reference - n_predicted
-            residual_dens = dens_reference - dens_predicted
+            residual_n = n_predicted - n_reference
+            residual_dens = dens_predicted - dens_reference
 
             residuals_n.append(residual_n)
             residuals_dens.append(residual_dens)
