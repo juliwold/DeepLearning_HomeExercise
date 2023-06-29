@@ -2,71 +2,54 @@
 
 Home exercise for NOVA course on deep learning in remote sensing.
 
-[Models](<https://www.comet.com/juliwold/home-exercise-sapling-detector/view/uxR2erf0uJlERPXPjybwdN2yE/panels>)
+Models trained for this exercise can be found in this [Comet project](<https://www.comet.com/juliwold/home-exercise-sapling-detector/view/uxR2erf0uJlERPXPjybwdN2yE/panels>).
 
-## Objective
+## Overview
 
-Compare the effect of training a seedling detector on your own annotated
-dataset Vs full dataset (all annotations merged) on the detector’s performance.
+The repository consists four folders:
 
-## Data
+- figures
+  - Contains Comet figures used in report.
+- models
+  - Contains results from training for all models.
+    - Weights of models are not included (*best.pt* can be collected from Comet).
+  - Selected models contains processed predictions and evaluation metrics.
+- report
+  - Contains report and the *qmd* file generating the report.
+- scripts
+  - Contains scripts used in the experiments
 
-### Train/Val data
+## Scripts
 
-- Own Annotations
-  - Annotations made by me.
-- Full annotations
-  - Merging of all annotations made by students.
+### Main scripts
 
-### Test data
+- 1-tile_train_data.py
+  - Tiles data to annotate and use in training. Unused as data was already tiled and annotated.
+- 2-utm_to_yolo.py
+  - Converts annotations from geospatial format to yolo format.
+- 3-train_val_split.py
+  - Performs train/val split on data.
+- 4-model_training.py
+  - Trains the YOLO models using a grid search.
+- 5-tile-test-data.py
+  - Tile the test data for predicting on.
+- 6-model_inferrence.py
+  - Perform predictions on tiled test data.
+- 7-post_process_predictions.py
+  - Convert the predictions from yolo to geospatial format.
+  - Apply Intersect over Union (IoU) filter.
+- 8-model_evaluation_ml.py
+  - Evaluate model using ml metrics.
+- 9-model_evaluation_domain.py
+  - Evaluate models using domain metrics.
 
-- Tiled test data for evaluation using ML metrics. These data are located in
-  /content/drive/MyDrive/NOVA_course_deep_learning/data/annotated_data/test
-- Drone RGB orthomosaics for evaluation using domain metrics. The files are
-  stored in
-  /content/drive/MyDrive/NOVA_course_deep_learning/data/orthomosaics/test_data.
-  Differently than the exercise done in class now, we will validate the
-  detector’s performance in four sites where trees where the tree positions
-  were measured with GPS in the field (reference trees are in
-  /content/drive/MyDrive/NOVA_course_deep_learning/data/map_data/test_annotations2_sun.geojson).
-  The field data were collected for four square plots (approx. 0.1 ha) per
-  site.  
+### Helper scripts
 
-## Methods
-
-### Stats
-
-Provide stats on the number of annotated images and bounding boxes (some graph
-would even be better). e.g
-
-|          | Own data | Full data |
-|----------|----------|-----------|
-| n images |          |           |
-| n trees  |          |           |
-
-### Model Training
-
-- Train a detector for each dataset and find the best (largest mAP@.5) set of
-hyperparameters for model training such as model size (YOLOn, YOLOx,...),
-image size (e.g. 640, 1000,...), …
-
-### Model Evaluation
-
-- Compare the evaluation metrics for the two detectors trained above (own and
-  full) including:
-  - ML (confusion matrices, mAP@.5, F1-curve).
-  - Domain-specific (RMSE, bias, RMSE%, bias%, scatterplot of reference Vs
-    predicted) on all of the four sites (in class we did only one site).
-
-## Discussion
-
-- Comment on the impact of different hyperparameters (model training) on the
-  detectors’ performance and inference speed (some COMET plots would be greatly
-  helpful to explain the experiment 😀).
-
-- Is the model trained on more data better than the one trained on your own
-  dataset? Discuss what could be the underlying causes.
-
-- Provide at least three example screenshots of cases where the detector
-  performed poorly and discuss what could be a good strategy to mitigate such
-  issues.
+- find_paths.py
+  - Helper functions to find project and model paths.
+- process_predictions.py
+  - Functions to collect bounding boxes from tiles and apply IoU filter.
+- tile_data.py
+  - Function for tiling orthomosaics.
+- yolo_conversions.py
+  - Functions for converting between yolo and geospatial formats.
