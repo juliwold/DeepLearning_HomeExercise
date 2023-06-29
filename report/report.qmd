@@ -232,7 +232,6 @@ training_results <-
 #| warning: FALSE
 #| label: fig-training
 #| fig-cap: Training results
-#| fig-width: 1024
 
 training_plot <-
     training_results %>%
