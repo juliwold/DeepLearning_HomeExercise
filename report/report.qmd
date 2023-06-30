@@ -161,7 +161,7 @@ $$ {#eq-md}
 
 ### Training performance
 
-Models trained by the **My annotations** dataset achived better performance in training than the models trained on **All annotations**. For **My annotations** the highest performance was achived by the *nano* model with image size *640* (mAP@.5 of 0.59 at epoch 94). The best perfoming model for **All annotations** was the *meduim* model with an image size of *640* (mAP@.5 of 0.36 at epoch 42). Summary of training results for are shown in @tbl-trainingperformance-1 and @tbl-trainingperformance-2 for **My annotations** and **All annotations** respectivley.
+Models trained by the **My annotations** dataset achived better performance in training than the models trained on **All annotations**. For **My annotations** the highest performance was achived by the *nano* model with image size *640* (mAP@.5 of 0.59 at epoch 94). The best perfoming model for **All annotations** was the *meduim* model with an image size of *640* (mAP@.5 of 0.36 at epoch 42). Summary of training results for are shown in @tbl-trainingperformance-1 and @tbl-trainingperformance-2 for **My annotations** and **All annotations** respectively.
 
 ```{r}
 #| label: collect-traning-performance
